@@ -114,16 +114,20 @@
     (include-css "/style.css")
     (form-to {:class :flex} [:post "/add-session"]
       [:div
+       "name" [:br]
        [:select {:name :name}
         (select-options (persons) (:value (cookies "name")))]
        [:br]
        (text-field :name-override)]
       [:div
+       "figure" [:br]
        [:select {:name :figure}
         (select-options (figures) (:value (cookies "figure")))]
        [:br]
        (text-field :figure-override)]
-      (text-field :reps)
+      [:div
+       "reps" [:br]
+       (text-field :reps)]
       (submit-button :log))
     [:div.flex
      (for [[fig xs] (group-by :figure (sessions))]
