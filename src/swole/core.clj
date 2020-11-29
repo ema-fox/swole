@@ -65,17 +65,15 @@
      @conn))
 
 (defn sessions []
-  (for [[name fig reps time]
-        (q '[:find ?name ?fig ?reps ?time
-             :where
-             [?x :name ?name]
-             [?y :yogi ?x ?trans]
-             [?y :figure ?fig]
-             [?y :reps ?reps]
-             [?trans :db/txInstant ?time]]
-           @conn)]
-    {:name name :figure fig :reps reps :time time}))
-
+  (q '[:find ?name ?fig ?reps ?time
+       :keys name figure reps time
+       :where
+       [?x :name ?name]
+       [?y :yogi ?x ?trans]
+       [?y :figure ?fig]
+       [?y :reps ?reps]
+       [?trans :db/txInstant ?time]]
+     @conn))
 
 (defn get-day [inst]
   (local-date inst (zone-id)))
