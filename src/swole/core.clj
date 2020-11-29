@@ -130,7 +130,7 @@
        (text-field :reps)]
       (submit-button :log))
     [:div.flex
-     (for [[fig xs] (group-by :figure (sessions))]
+     (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
        [:div
         [:div fig (str)] (make-table xs)])]))
 
