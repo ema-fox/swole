@@ -1,0 +1,7 @@
+{:paths ["src" "resources"]
+ :deps
+ {io.replikativ/datahike {:mvn/version "0.3.2"}
+  ring/ring {:mvn/version "1.8.2"}
+  hiccup/hiccup {:mvn/version "1.0.5"}
+  compojure/compojure {:mvn/version "1.6.2"}
+  clojure.java-time/clojure.java-time {:mvn/version "0.3.2"}}}

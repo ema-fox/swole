@@ -1,0 +1,45 @@
+
+table {
+    border-spacing: 0px;
+    font-family: monospace;
+    font-size: 1.3em;
+}
+
+td {
+    padding: 1ch;
+    vertical-align: top;
+}
+
+tr:nth-child(odd) {
+    background-color: #ece3ce;
+}
+
+.alltime {
+    color: #112266;
+    font-size: 1.8em;
+}
+
+.allday {
+    color: #112266;
+    font-size: 1.5em;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.flex > * {
+    margin: 1ch;
+}
+
+@media(min-resolution:1.25dppx) {
+    body {
+        font-size: 2em;
+    }
+    input {
+        -transform: scale(2);
+        -margin: 3em;
+    }
+}
+
