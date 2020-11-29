@@ -75,6 +75,13 @@
        [?trans :db/txInstant ?time]]
      @conn))
 
+(defn max-reps []
+  (into {} (q '[:find ?fig (max ?reps)
+                :where
+                [?x :figure ?fig]
+                [?x :reps ?reps]]
+              @conn)))
+
 (defn get-day [inst]
   (local-date inst (zone-id)))
 
@@ -90,7 +97,7 @@
       :cookies {:name {:value name}
                 :figure {:value figure}})))
 
-(defn make-table [xs]
+(defn make-table [xs mr]
   (let [bla (sort-by first (group-by :name xs))]
     [:table
      [:tr (for [[_ ys] bla]
@@ -104,7 +111,9 @@
                (let [ss (map :reps (reverse (sort-by :time ws)))]
                  [:td [:div.allday (apply + ss)]
                   (for [s ss]
-                    [:div (str s)])]))]))]))
+                    [:div (if (= s mr)
+                            {:class :max})
+                     (str s)])]))]))]))
 
 (defn index [{:keys [cookies]}]
   (html5
@@ -128,9 +137,10 @@
        (text-field :reps)]
       (submit-button :log))
     [:div.flex
-     (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
-       [:div
-        [:div fig (str)] (make-table xs)])]))
+     (let [mr (max-reps)]
+       (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
+         [:div
+          [:div fig (str)] (make-table xs (mr fig))]))]))
 
 (defroutes app
   (GET "/" [] index)

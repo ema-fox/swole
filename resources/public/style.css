@@ -24,6 +24,10 @@ tr:nth-child(odd) {
     font-size: 1.5em;
 }
 
+.max {
+    text-decoration: underline;
+}
+
 .flex {
     display: flex;
     flex-wrap: wrap;
