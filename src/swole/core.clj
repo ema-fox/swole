@@ -107,13 +107,19 @@
      (for [[day zs] (reverse (sort-by first (group-by #(get-day (:time %)) xs)))]
        (list
         [:tr [:td {:colspan 100} day]]
-        [:tr (for [[_ ws] (sort-by first (group-by :name zs))]
-               (let [ss (map :reps (reverse (sort-by :time ws)))]
-                 [:td [:div.allday (apply + ss)]
+        (let [day (into {} (group-by :name zs))]
+          [:tr (for [[name _] bla
+                     :let [ws (day name)
+                           ss (map :reps (reverse (sort-by :time ws)))]]
+                 [:td
+                  (let [allday (apply + ss)]
+                    (if (> allday 0)
+                      [:div.allday allday]
+                      [:div "-"]))
                   (for [s ss]
                     [:div (if (= s mr)
                             {:class :max})
-                     (str s)])]))]))]))
+                     (str s)])])])))]))
 
 (defn index [{:keys [cookies]}]
   (html5
