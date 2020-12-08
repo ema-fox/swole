@@ -1,5 +1,6 @@
 (ns swole.core
-  (:require [datahike.api :refer [q pull db transact] :as d]
+  (:require [clojure.string :refer [split]]
+            [datahike.api :refer [q pull db transact] :as d]
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.cookies :refer [wrap-cookies]]
@@ -92,7 +93,8 @@
         figure (if (seq (params "figure-override"))
                  (params "figure-override")
                  (params "figure"))]
-    (add-session name figure (Long. (params "reps")))
+    (doseq [reps (split (params "reps") #"\s+")]
+      (add-session name figure (Long. reps)))
     (assoc (redirect "/")
       :cookies {:name {:value name}
                 :figure {:value figure}})))
