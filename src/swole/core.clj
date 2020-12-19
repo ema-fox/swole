@@ -99,6 +99,27 @@
       :cookies {:name {:value name}
                 :figure {:value figure}})))
 
+(defn make-day [date data names mr]
+  (list
+   [:tr [:td {:colspan 100} date]]
+   (let [day (into {} (group-by :name data))
+         alldays (into {} (for [[name d] day]
+                            [name (apply + (map :reps d))]))
+         day-record (apply max (map second alldays))]
+     [:tr (for [name names
+                :let [ws (day name)
+                      ss (map :reps (reverse (sort-by :time ws)))
+                      allday (alldays name)]]
+            [:td (if (= allday day-record)
+                   {:class :day-record})
+             (if allday
+               [:div.allday allday]
+               [:div "-"])
+             (for [s ss]
+               [:div (if (= s mr)
+                       {:class :max})
+                (str s)])])])))
+
 (defn make-table [xs mr]
   (let [bla (sort-by first (group-by :name xs))]
     [:table
@@ -107,21 +128,7 @@
      [:tr (for [[yogi _] bla]
             [:td yogi])]
      (for [[day zs] (reverse (sort-by first (group-by #(get-day (:time %)) xs)))]
-       (list
-        [:tr [:td {:colspan 100} day]]
-        (let [day (into {} (group-by :name zs))]
-          [:tr (for [[name _] bla
-                     :let [ws (day name)
-                           ss (map :reps (reverse (sort-by :time ws)))]]
-                 [:td
-                  (let [allday (apply + ss)]
-                    (if (> allday 0)
-                      [:div.allday allday]
-                      [:div "-"]))
-                  (for [s ss]
-                    [:div (if (= s mr)
-                            {:class :max})
-                     (str s)])])])))]))
+       (make-day day zs (map first bla) mr))]))
 
 (defn index [{:keys [cookies]}]
   (html5
