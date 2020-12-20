@@ -31,6 +31,7 @@
              (one :yogi :db.type/ref)
              (one :reps :db.type/long)
              (one :figure :db.type/string)
+             (one :offset :db.type/long)
              ])
 
 (def cfg {:store {:backend :file :path "data"}})
@@ -51,8 +52,8 @@
 (defn add-person [name email]
   (transact conn [{:name name :email email}]))
 
-(defn add-session [name figure reps]
-  (transact conn [{:yogi {:name name} :figure figure :reps reps}]))
+(defn add-session [name figure reps offset]
+  (transact conn [{:yogi {:name name} :figure figure :reps reps :offset offset}]))
 
 (defn persons []
   (q '[:find [?name ...]
@@ -66,15 +67,20 @@
      @conn))
 
 (defn sessions []
-  (q '[:find ?name ?fig ?reps ?time
-       :keys name figure reps time
+  (q '[:find ?name ?fig ?reps ?time ?date2
+       :keys name figure reps time date
+       :in $ ?zone-id
        :where
        [?x :name ?name]
        [?y :yogi ?x ?trans]
        [?y :figure ?fig]
        [?y :reps ?reps]
-       [?trans :db/txInstant ?time]]
-     @conn))
+       [(get-else $ ?y :offset 0) ?offset]
+       [?trans :db/txInstant ?time]
+       [(java-time/local-date ?time ?zone-id) ?date]
+       [(java-time/days ?offset) ?days]
+       [(java-time/minus ?date ?days) ?date2]]
+     @conn (zone-id)))
 
 (defn max-reps []
   (into {} (q '[:find ?fig (max ?reps)
@@ -94,7 +100,7 @@
                  (params "figure-override")
                  (params "figure"))]
     (doseq [reps (split (params "reps") #"\s+")]
-      (add-session name figure (Long. reps)))
+      (add-session name figure (Long. reps) (Long. (params "offset"))))
     (assoc (redirect "/")
       :cookies {:name {:value name}
                 :figure {:value figure}})))
@@ -127,7 +133,7 @@
             [:td.alltime (apply + (map :reps ys))])]
      [:tr (for [[yogi _] bla]
             [:td yogi])]
-     (for [[day zs] (reverse (sort-by first (group-by #(get-day (:time %)) xs)))]
+     (for [[day zs] (reverse (sort-by first (group-by :date xs)))]
        (make-day day zs (map first bla) mr))]))
 
 (defn index [{:keys [cookies]}]
@@ -150,6 +156,12 @@
       [:div
        "reps" [:br]
        (text-field :reps)]
+      [:div
+       "days before" [:br]
+       [:input {:type :number
+                :id :offset
+                :name :offset
+                :value 0}]]
       (submit-button :log))
     [:div.flex
      (let [mr (max-reps)]
