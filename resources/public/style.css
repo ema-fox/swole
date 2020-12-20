@@ -34,6 +34,11 @@ tr:nth-child(odd) {
     text-decoration: underline;
 }
 
+.graph {
+    display: flex;
+    height: 10em;
+}
+
 .flex {
     display: flex;
     flex-wrap: wrap;

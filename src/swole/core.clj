@@ -28,6 +28,7 @@
                :db/unique :db.unique/identity)
              (assoc (one :email :db.type/string)
                :db/unique :db.unique/value)
+             (one :color :db.type/string)
              (one :yogi :db.type/ref)
              (one :reps :db.type/long)
              (one :figure :db.type/string)
@@ -55,6 +56,10 @@
 (defn add-session [name figure reps offset]
   (transact conn [{:yogi {:name name} :figure figure :reps reps :offset offset}]))
 
+(defn set-color [name color]
+  (transact conn [{:db/id [:name name] :color color}]))
+
+
 (defn persons []
   (q '[:find [?name ...]
        :where [_ :name ?name]]
@@ -81,6 +86,13 @@
        [(java-time/days ?offset) ?days]
        [(java-time/minus ?date ?days) ?date2]]
      @conn (zone-id)))
+
+(defn get-colors []
+  (into {} (q '[:find ?name ?color
+                :where
+                [?yogi :name ?name]
+                [?yogi :color ?color]]
+              @conn)))
 
 (defn max-reps []
   (into {} (q '[:find ?fig (max ?reps)
@@ -127,14 +139,29 @@
                 (str s)])])])))
 
 (defn make-table [xs mr]
-  (let [bla (sort-by first (group-by :name xs))]
+  (let [bla (sort-by first (group-by :name xs))
+        colors (get-colors)]
     [:table
      [:tr (for [[_ ys] bla]
             [:td.alltime (apply + (map :reps ys))])]
      [:tr (for [[yogi _] bla]
-            [:td yogi])]
+            [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
+             yogi])]
      (for [[day zs] (reverse (sort-by first (group-by :date xs)))]
        (make-day day zs (map first bla) mr))]))
+
+(defn make-graph [xs]
+  [:div.graph
+  (let [f1 (sort-by first (group-by :date xs))
+        all-reps (apply + (map :reps xs))
+        colors (get-colors)]
+    (for [[date f2] f1
+          :let [day-reps (apply + (map :reps f2))]]
+      [:div {:style (str "width: " (float (* 100 (/ day-reps all-reps))) "%")}
+       (for [[name f3] (sort-by first (group-by :name f2))
+             :let [reps (apply + (map :reps f3))]]
+         [:div {:style (str "height: " (float (* 100 (/ reps day-reps))) "%; background-color: " (or (colors name) "grey"))}
+          "&nbsp;"])]))])
 
 (defn index [{:keys [cookies]}]
   (html5
@@ -167,7 +194,9 @@
      (let [mr (max-reps)]
        (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
          [:div
-          [:div fig (str)] (make-table xs (mr fig))]))]))
+          [:div fig (str)]
+          (make-graph xs)
+          (make-table xs (mr fig))]))]))
 
 (defroutes app
   (GET "/" [] index)
