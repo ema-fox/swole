@@ -48,6 +48,17 @@ tr:nth-child(odd) {
     margin: 1ch;
 }
 
+.retract-link {
+    color: #ee3311;
+    text-decoration: none;
+    display: none;
+}
+
+*:hover > .retract-link {
+    display: inline;
+}
+
+
 @media(min-resolution:1.25dppx) {
     body {
         font-size: 2em;

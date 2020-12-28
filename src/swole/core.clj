@@ -9,7 +9,8 @@
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
             [hiccup.page :refer [html5 include-css]]
-            [hiccup.form :refer [form-to text-field submit-button select-options]]
+            [hiccup.form :refer [form-to text-field hidden-field submit-button select-options]]
+            [hiccup.element :refer [link-to]]
             [java-time :refer [local-date zone-id]]))
 
 (defn schemon [ident type cardinality]
@@ -72,8 +73,8 @@
      @conn))
 
 (defn sessions []
-  (q '[:find ?name ?fig ?reps ?time ?date2
-       :keys name figure reps time date
+  (q '[:find ?name ?fig ?reps ?time ?date2 ?y
+       :keys name figure reps time date id
        :in $ ?zone-id
        :where
        [?x :name ?name]
@@ -126,17 +127,17 @@
          day-record (apply max (map second alldays))]
      [:tr (for [name names
                 :let [ws (day name)
-                      ss (map :reps (reverse (sort-by :time ws)))
+                      ss (reverse (sort-by :time ws))
                       allday (alldays name)]]
             [:td (if (= allday day-record)
                    {:class :day-record})
              (if allday
                [:div.allday allday]
                [:div "-"])
-             (for [s ss]
-               [:div (if (= s mr)
+             (for [{:keys [reps id]} ss]
+               [:div (if (= reps mr)
                        {:class :max})
-                (str s)])])])))
+                (str reps) (link-to {:class :retract-link} (str "/retract/" id) "x")])])])))
 
 (defn make-table [xs mr]
   (let [bla (sort-by first (group-by :name xs))
@@ -198,9 +199,26 @@
           (make-graph xs)
           (make-table xs (mr fig))]))]))
 
+(defn get-retract [id]
+  (html5
+    [:title (str "swole - retract " id)]
+    (include-css "/style.css")
+    [:div "do you want to retract?"]
+    (str (pull @conn [:* {:yogi [:name]}] id))
+    (form-to {:class :flex} [:post "/retract"]
+      (hidden-field :id id)
+      (link-to "/" "no")
+      (submit-button :yes))))
+
+(defn post-retract [{:keys [params]}]
+  (transact conn [[:db/retractEntity (Long. (params "id"))]])
+  (redirect "/"))
+
 (defroutes app
   (GET "/" [] index)
   (POST "/add-session" [] add-session-page)
+  (GET "/retract/:id" [id] (get-retract (Long. id)))
+  (POST "/retract" [] post-retract)
   (route/resources "/")
   (route/not-found "not found"))
 
