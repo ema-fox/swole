@@ -1,5 +1,5 @@
 (ns swole.core
-  (:require [clojure.string :refer [split]]
+  (:require [clojure.string :refer [split trim]]
             [datahike.api :refer [q pull db transact] :as d]
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.params :refer [wrap-params]]
@@ -55,7 +55,7 @@
   (transact conn [{:name name :email email}]))
 
 (defn add-session [name figure reps offset]
-  (transact conn [{:yogi {:name name} :figure figure :reps reps :offset offset}]))
+  (transact conn [{:yogi {:name name} :figure (trim figure) :reps reps :offset offset}]))
 
 (defn set-color [name color]
   (transact conn [{:db/id [:name name] :color color}]))
