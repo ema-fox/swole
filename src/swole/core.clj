@@ -6,6 +6,7 @@
             [ring.middleware.cookies :refer [wrap-cookies]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.util.response :refer [redirect]]
+            [ring.util.codec :refer [url-encode url-decode]]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
             [hiccup.page :refer [html5 include-css]]
@@ -95,12 +96,13 @@
                 [?yogi :color ?color]]
               @conn)))
 
-(defn max-reps []
-  (into {} (q '[:find ?fig (max ?reps)
-                :where
-                [?x :figure ?fig]
-                [?x :reps ?reps]]
-              @conn)))
+(defn max-reps [fig]
+  (q '[:find (max ?reps) .
+       :in $ ?fig
+       :where
+       [?x :figure ?fig]
+       [?x :reps ?reps]]
+     @conn fig))
 
 (defn get-day [inst]
   (local-date inst (zone-id)))
@@ -139,7 +141,7 @@
                        {:class :max})
                 (str reps) (link-to {:class :retract-link} (str "/retract/" id) "x")])])])))
 
-(defn make-table [xs mr]
+(defn make-table [xs mr limit]
   (let [bla (sort-by first (group-by :name xs))
         colors (get-colors)]
     [:table
@@ -148,7 +150,7 @@
      [:tr (for [[yogi _] bla]
             [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
              yogi])]
-     (for [[day zs] (reverse (sort-by first (group-by :date xs)))]
+     (for [[day zs] (take limit (reverse (sort-by first (group-by :date xs))))]
        (make-day day zs (map first bla) mr))]))
 
 (defn make-graph [xs]
@@ -163,6 +165,12 @@
              :let [reps (apply + (map :reps f3))]]
          [:div {:style (str "height: " (float (* 100 (/ reps day-reps))) "%; background-color: " (or (colors name) "grey"))}
           "&nbsp;"])]))])
+
+(defn make-figure [fig xs limit]
+  [:div
+   [:div fig (str)]
+   (make-graph xs)
+   (make-table xs (max-reps fig) limit)])
 
 (defn index [{:keys [cookies]}]
   (html5
@@ -192,12 +200,15 @@
                 :value 0}]]
       [:div (submit-button :log)])
     [:div.flex
-     (let [mr (max-reps)]
-       (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
-         [:div
-          [:div fig (str)]
-          (make-graph xs)
-          (make-table xs (mr fig))]))]))
+     (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
+       [:div (make-figure fig xs 14)
+        (link-to (str "/f/" (url-encode fig)) "more")])]))
+
+(defn for-figure [figure]
+  (html5
+    [:title (str figure " - swole")]
+    (include-css "/style.css")
+    (make-figure figure ((group-by :figure (sessions)) figure) 9999)))
 
 (defn get-retract [id]
   (html5
@@ -216,6 +227,7 @@
 
 (defroutes app
   (GET "/" [] index)
+  (GET "/f/:figure" [figure] (for-figure (url-decode figure)))
   (POST "/add-session" [] add-session-page)
   (GET "/retract/:id" [id] (get-retract (Long. id)))
   (POST "/retract" [] post-retract)
