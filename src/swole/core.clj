@@ -190,7 +190,7 @@
                 :id :offset
                 :name :offset
                 :value 0}]]
-      (submit-button :log))
+      [:div (submit-button :log)])
     [:div.flex
      (let [mr (max-reps)]
        (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]

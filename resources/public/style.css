@@ -61,11 +61,11 @@ tr:nth-child(odd) {
 
 @media(min-resolution:1.25dppx) {
     body {
-        font-size: 2em;
+        font-size: 1.5em;
     }
-    input {
-        -transform: scale(2);
-        -margin: 3em;
+    input, select {
+        font-size: 3em;
+        width: 15ch;
     }
 }
 
