@@ -153,18 +153,30 @@
      (for [[day zs] (take limit (reverse (sort-by first (group-by :date xs))))]
        (make-day day zs (map first bla) mr))]))
 
+(defn make-bar [xs orientation grouper f]
+  (let [sum (apply + (map :reps xs))]
+    (for [[group ys] (sort-by first (group-by grouper xs))
+          :let [reps (apply + (map :reps ys))]]
+      [:div {:style (str orientation ": " (float (* 100 (/ reps sum))) "%")}
+       (f group ys)])))
+
+(defn as-week [date]
+  (java-time/as date :week-based-year :week-of-week-based-year))
+
 (defn make-graph [xs]
   [:div.graph
-  (let [f1 (sort-by first (group-by :date xs))
-        all-reps (apply + (map :reps xs))
-        colors (get-colors)]
-    (for [[date f2] f1
-          :let [day-reps (apply + (map :reps f2))]]
-      [:div {:style (str "width: " (float (* 100 (/ day-reps all-reps))) "%")}
-       (for [[name f3] (sort-by first (group-by :name f2))
-             :let [reps (apply + (map :reps f3))]]
-         [:div {:style (str "height: " (float (* 100 (/ reps day-reps))) "%; background-color: " (or (colors name) "grey"))}
-          "&nbsp;"])]))])
+   (let [colors (get-colors)
+         yogi-f (fn [name _]
+                  [:div {:style (str "height: 100%; background-color: "
+                                     (or (colors name) "grey"))}
+                   "&nbsp;"])
+         day-f (fn [_ ys]
+                 [:div.graph-horizontal
+                  (make-bar ys 'width :name yogi-f)])
+         week-f (fn [_ ys]
+                  [:div {:style "height: 100%"}
+                   (make-bar ys 'height :date day-f)])]
+     (make-bar xs 'width (comp as-week :date) week-f))])
 
 (defn make-figure [fig xs limit]
   [:div

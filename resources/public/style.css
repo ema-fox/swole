@@ -39,6 +39,11 @@ tr:nth-child(odd) {
     height: 10em;
 }
 
+.graph-horizontal {
+    height: 100%;
+    display: flex;
+}
+
 .flex {
     display: flex;
     flex-wrap: wrap;
