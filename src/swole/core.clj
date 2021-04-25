@@ -147,7 +147,7 @@
     [:table
      [:tr (for [[_ ys] bla]
             [:td.alltime (apply + (map :reps ys))])]
-     [:tr (for [[yogi _] bla]
+     [:tr.name-bar (for [[yogi _] bla]
             [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
              yogi])]
      (for [[day zs] (take limit (reverse (sort-by first (group-by :date xs))))]

@@ -1,5 +1,6 @@
 body {
-    background-color: #f2ead9
+    background-color: #444;
+    color: #aaa;
 }
 
 table {
@@ -14,19 +15,29 @@ td {
 }
 
 tr:nth-child(odd) {
-    background-color: #ecdcb9;
+    background-color: #666;
 }
 
 .alltime {
-    color: #112266;
+    color: #0c1131;
     font-size: 1.8em;
 }
 
-.day-record {
-    background-color: #ece3ce;
+.name-bar {
+    background-color: #888;
 }
+
+.day-record {
+    background-color: #555;
+    color: #ccc;
+}
+
+.day-record .allday {
+    color: #1d2559;
+}
+
 .allday {
-    color: #112266;
+    color: #0c1131;
     font-size: 1.5em;
 }
 
@@ -57,6 +68,10 @@ tr:nth-child(odd) {
     color: #ee3311;
     text-decoration: none;
     display: none;
+}
+
+a {
+    color: #1d2559;
 }
 
 *:hover > .retract-link {
