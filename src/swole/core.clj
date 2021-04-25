@@ -143,15 +143,18 @@
 
 (defn make-table [xs mr limit]
   (let [bla (sort-by first (group-by :name xs))
+        all-time (into {} (for [[name ys] bla]
+                            [name (apply + (map :reps ys))]))
+        names (sort-by all-time > (map first bla))
         colors (get-colors)]
     [:table
-     [:tr (for [[_ ys] bla]
-            [:td.alltime (apply + (map :reps ys))])]
-     [:tr.name-bar (for [[yogi _] bla]
+     [:tr (for [name names]
+            [:td.alltime (all-time name)])]
+     [:tr.name-bar (for [yogi names]
             [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
              yogi])]
      (for [[day zs] (take limit (reverse (sort-by first (group-by :date xs))))]
-       (make-day day zs (map first bla) mr))]))
+       (make-day day zs names mr))]))
 
 (defn make-bar [xs orientation grouper f]
   (let [sum (apply + (map :reps xs))]
