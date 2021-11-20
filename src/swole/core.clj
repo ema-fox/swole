@@ -150,10 +150,11 @@
                                            (sort-by first)
                                            reverse
                                            (map (fn [[date zs]]
-                                                  [(time-between date (local-date) :days)
+                                                  [(* (time-between date (local-date) :days)
+                                                      DAILY-GOAL)
                                                    (apply + (map :reps zs))]))
                                            (reductions (fn [[_ x] [days y]]
-                                                         [(* days DAILY-GOAL) (+ x y)]))
+                                                         [days (+ x y)]))
                                            (take-while (partial apply <))
                                            last
                                            second)]))
