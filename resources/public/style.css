@@ -14,13 +14,18 @@ td {
     vertical-align: top;
 }
 
-tr:nth-child(odd) {
+tr:nth-child(even) {
     background-color: #666;
+}
+
+.magic-streak {
+    color: #aaa;
+    font-size: 1.8em;
 }
 
 .alltime {
     color: #0c1131;
-    font-size: 1.8em;
+    font-size: 1.4em;
 }
 
 .name-bar {

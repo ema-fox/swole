@@ -12,7 +12,7 @@
             [hiccup.page :refer [html5 include-css]]
             [hiccup.form :refer [form-to text-field hidden-field submit-button select-options]]
             [hiccup.element :refer [link-to]]
-            [java-time :refer [local-date zone-id]]))
+            [java-time :refer [local-date zone-id time-between]]))
 
 (defn schemon [ident type cardinality]
   {:db/ident ident
@@ -141,13 +141,29 @@
                        {:class :max})
                 (str reps) (link-to {:class :retract-link} (str "/retract/" id) "x")])])])))
 
+(def DAILY-GOAL 100)
+
 (defn make-table [xs mr limit]
   (let [bla (sort-by first (group-by :name xs))
+        magic-streak (into {} (for [[name ys] bla]
+                                [name (->> (group-by :date ys)
+                                           (sort-by first)
+                                           reverse
+                                           (map (fn [[date zs]]
+                                                  [(time-between date (local-date) :days)
+                                                   (apply + (map :reps zs))]))
+                                           (reductions (fn [[_ x] [days y]]
+                                                         [(* days DAILY-GOAL) (+ x y)]))
+                                           (take-while (partial apply <))
+                                           last
+                                           second)]))
         all-time (into {} (for [[name ys] bla]
                             [name (apply + (map :reps ys))]))
         names (sort-by all-time > (map first bla))
         colors (get-colors)]
     [:table
+     [:tr (for [name names]
+            [:td.magic-streak (magic-streak name)])]
      [:tr (for [name names]
             [:td.alltime (all-time name)])]
      [:tr.name-bar (for [yogi names]
