@@ -152,17 +152,20 @@
 
 (def DAILY-GOAL 100)
 
+(defn div [divisor numerator]
+  (/ numerator divisor))
+
 (defn magic-streak [days]
-  (format "%.1f"
-          (-> (->> (sort-by first days)
-                  (reductions (fn [[_ reps-after] [days-ago reps]]
-                                [(* days-ago DAILY-GOAL)
-                                 (+ reps-after reps)]))
-                  (take-while (partial apply <)))
-              last
-              second
-              (/ DAILY-GOAL)
-              bigdec)))
+  (some->> (sort-by first days)
+           (reductions (fn [[_ reps-after] [days-ago reps]]
+                         [(* days-ago DAILY-GOAL)
+                          (+ reps-after reps)]))
+           (take-while (partial apply <))
+           last
+           second
+           (div DAILY-GOAL)
+           bigdec
+           (format "%.1f")))
 
 (defn ema [days]
   (let [weights (map #(Math/pow 0.9 %)
