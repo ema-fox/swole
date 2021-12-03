@@ -14,11 +14,11 @@ td {
     vertical-align: top;
 }
 
-tr:nth-child(even) {
+.date-bar, .alltime {
     background-color: #666;
 }
 
-.magic-streak {
+.magic-streak, .ema {
     color: #aaa;
     font-size: 1.8em;
 }

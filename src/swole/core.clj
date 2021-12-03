@@ -122,7 +122,7 @@
 
 (defn make-day [date data names mr]
   (list
-   [:tr [:td {:colspan 100} date]]
+   [:tr.date-bar [:td {:colspan 100} date]]
    (let [day (into {} (group-by :name data))
          alldays (into {} (for [[name d] day]
                             [name (apply + (map :reps d))]))
@@ -141,32 +141,53 @@
                        {:class :max})
                 (str reps) (link-to {:class :retract-link} (str "/retract/" id) "x")])])])))
 
+(defn map-values [f m]
+  (into {} (for [[k v] m]
+             [k (f v)])))
+
+(defn day-view [entries]
+  (into {} (for [[date zs] (group-by :date entries)]
+             [(time-between date (local-date) :days)
+              (apply + (map :reps zs))])))
+
 (def DAILY-GOAL 100)
 
+(defn magic-streak [days]
+  (format "%.1f"
+          (-> (->> (sort-by first days)
+                  (reductions (fn [[_ reps-after] [days-ago reps]]
+                                [(* days-ago DAILY-GOAL)
+                                 (+ reps-after reps)]))
+                  (take-while (partial apply <)))
+              last
+              second
+              (/ DAILY-GOAL)
+              bigdec)))
+
+(defn ema [days]
+  (let [weights (map #(Math/pow 0.9 %)
+                     (range 100))]
+    (int (/ (apply + (map-indexed (fn [days-ago weight]
+                                    (* (get days days-ago 0)
+                                       weight))
+                                  weights))
+            (apply + weights)))))
+
+(defn score-row [class names data]
+  [:tr {:class class}
+   (map (comp (partial vector :td)
+              data)
+        names)])
+
 (defn make-table [xs mr limit]
-  (let [bla (sort-by first (group-by :name xs))
-        magic-streak (into {} (for [[name ys] bla]
-                                [name (->> (group-by :date ys)
-                                           (sort-by first)
-                                           reverse
-                                           (map (fn [[date zs]]
-                                                  [(* (time-between date (local-date) :days)
-                                                      DAILY-GOAL)
-                                                   (apply + (map :reps zs))]))
-                                           (reductions (fn [[_ x] [days y]]
-                                                         [days (+ x y)]))
-                                           (take-while (partial apply <))
-                                           last
-                                           second)]))
-        all-time (into {} (for [[name ys] bla]
-                            [name (apply + (map :reps ys))]))
-        names (sort-by all-time > (map first bla))
+  (let [dv (map-values day-view (group-by :name xs))
+        all-time (map-values (comp (partial apply +) vals) dv)
+        names (sort-by all-time > (keys all-time))
         colors (get-colors)]
     [:table
-     [:tr (for [name names]
-            [:td.magic-streak (magic-streak name)])]
-     [:tr (for [name names]
-            [:td.alltime (all-time name)])]
+     (score-row :ema names (map-values ema dv))
+     (score-row :magic-streak names (map-values magic-streak dv))
+     (score-row :alltime names all-time)
      [:tr.name-bar (for [yogi names]
             [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
              yogi])]
