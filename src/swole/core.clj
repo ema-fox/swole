@@ -247,7 +247,7 @@
        (text-field :figure-override)]
       [:div
        "reps" [:br]
-       (text-field :reps)]
+       (text-field {:inputmode :numeric} :reps)]
       [:div
        "days before" [:br]
        [:input {:type :number
