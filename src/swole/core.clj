@@ -157,9 +157,10 @@
 
 (defn magic-streak [days]
   (some->> (sort-by first days)
-           (reductions (fn [[_ reps-after] [days-ago reps]]
-                         [(* days-ago DAILY-GOAL)
-                          (+ reps-after reps)]))
+           (map (fn [[days-ago reps]]
+                  [(* days-ago DAILY-GOAL) reps]))
+           (reductions (fn [[_ reps-after] [goal reps]]
+                         [goal (+ reps-after reps)]))
            (take-while (partial apply <))
            last
            second
