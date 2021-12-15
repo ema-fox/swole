@@ -14,6 +14,7 @@
             [hiccup.element :refer [link-to]]
             [java-time :refer [local-date zone-id time-between]]))
 
+
 (defn schemon [ident type cardinality]
   {:db/ident ident
    :db/valueType type
@@ -88,6 +89,30 @@
        [(java-time/days ?offset) ?days]
        [(java-time/minus ?date ?days) ?date2]]
      @conn (zone-id)))
+
+(defn get-session [id tx-time]
+  (let [zi (zone-id)
+        e (pull @conn [:figure :reps :offset {:yogi [:name]}] id)
+        tx-date (java-time/local-date tx-time zi)]
+    (-> (assoc e
+          :id id
+          :time tx-time
+          :name (get-in e [:yogi :name])
+          :date (java-time/minus tx-date (java-time/days (:offset e 0))))
+        (dissoc :yogi :offset))))
+
+;; This assumes that entities never change, which is true for session entities
+(def get-session-m (memoize get-session))
+
+(defn sessions-m []
+  (->> (q '[:find ?y ?time
+            :in $
+            :where
+            [?y :yogi ?x ?trans]
+            [?trans :db/txInstant ?time]]
+          @conn)
+       (map (fn [[id tx-time]]
+              (get-session-m id tx-time)))))
 
 (defn get-colors []
   (into {} (q '[:find ?name ?color
@@ -257,7 +282,7 @@
                 :value 0}]]
       [:div (submit-button :log)])
     [:div.flex
-     (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions)))]
+     (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions-m)))]
        [:div (make-figure fig xs 14)
         (link-to (str "/f/" (url-encode fig)) "more")])]))
 
@@ -265,7 +290,7 @@
   (html5
     [:title (str figure " - swole")]
     (include-css "/style.css")
-    (make-figure figure ((group-by :figure (sessions)) figure) 9999)))
+    (make-figure figure ((group-by :figure (sessions-m)) figure) 9999)))
 
 (defn get-retract [id]
   (html5
