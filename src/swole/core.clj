@@ -175,7 +175,7 @@
              [(time-between date (local-date) :days)
               (apply + (map :reps zs))])))
 
-(def DAILY-GOAL 100)
+(def DAILY-GOAL 50)
 
 (defn div [divisor numerator]
   (/ numerator divisor))
@@ -183,7 +183,7 @@
 (defn magic-streak [days]
   (some->> (sort-by first days)
            (map (fn [[days-ago reps]]
-                  [(* days-ago DAILY-GOAL) reps]))
+                  [(* (- days-ago 2) DAILY-GOAL) reps]))
            (reductions (fn [[_ reps-after] [goal reps]]
                          [goal (+ reps-after reps)]))
            (take-while (partial apply <))
