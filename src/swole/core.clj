@@ -190,8 +190,7 @@
            last
            second
            (div DAILY-GOAL)
-           bigdec
-           (format "%.1f")))
+           bigdec))
 
 (defn ema [days]
   (let [weights (map #(Math/pow 0.9 %)
@@ -210,12 +209,20 @@
 
 (defn make-table [xs mr limit]
   (let [dv (map-values day-view (group-by :name xs))
+        ms (map-values magic-streak dv)
         all-time (map-values (comp (partial apply +) vals) dv)
         names (sort-by all-time > (keys all-time))
-        colors (get-colors)]
+        colors (get-colors)
+        today (local-date)]
     [:table
      (score-row :ema names (map-values ema dv))
-     (score-row :magic-streak names (map-values magic-streak dv))
+     (score-row :magic-streak names (map-values #(some->> % (format "%.1f")) ms))
+     (score-row :magic-streak-date names
+                (map-values #(some->> %
+                                      int
+                                      java-time/days
+                                      (java-time/minus today))
+                            ms))
      (score-row :alltime names all-time)
      [:tr.name-bar (for [yogi names]
             [:td {:style (str "font-weight: bold; color: " (or (colors yogi) "darkgrey"))}
