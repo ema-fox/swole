@@ -267,6 +267,12 @@
     (include-css "/style.css")
     (form-to {:class :flex} [:post "/add-session"]
       [:div
+       "days before" [:br]
+       [:input {:type :number
+                :id :offset
+                :name :offset
+                :value 0}]]
+      [:div
        "name" [:br]
        [:select {:name :name}
         (select-options (persons) (:value (cookies "name")))]
@@ -281,12 +287,6 @@
       [:div
        "reps" [:br]
        (text-field {:inputmode :numeric} :reps)]
-      [:div
-       "days before" [:br]
-       [:input {:type :number
-                :id :offset
-                :name :offset
-                :value 0}]]
       [:div (submit-button :log)])
     [:div.flex
      (for [[fig xs] (sort-by (comp count second) > (group-by :figure (sessions-m)))]
