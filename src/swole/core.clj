@@ -1,5 +1,8 @@
 (ns swole.core
+  (:refer-clojure :exclude [read-string])
   (:require [clojure.string :refer [split trim]]
+            [clojure.edn :refer [read-string]]
+            [clojure.java.shell :refer [sh]]
             [datahike.api :refer [q pull db transact] :as d]
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.params :refer [wrap-params]]
@@ -14,6 +17,7 @@
             [hiccup.element :refer [link-to]]
             [java-time :refer [local-date zone-id time-between]]))
 
+(def conf (read-string (slurp "conf.edn")))
 
 (defn schemon [ident type cardinality]
   {:db/ident ident
@@ -56,8 +60,33 @@
 (defn add-person [name email]
   (transact conn [{:name name :email email}]))
 
+(defn q-for-today [figure]
+  (q '[:find ?name (sum ?reps)
+       :with ?y
+       :keys name reps
+       :in $ ?zone-id ?fig ?date
+       :where
+       [?y :figure ?fig]
+       [?y :reps ?reps ?trans]
+       [(get-else $ ?y :offset 0) ?offset]
+       [?trans :db/txInstant ?time]
+       [(java-time/local-date ?time ?zone-id) ?date]
+       #_[(java-time/days ?offset) ?days]
+       #_[(java-time/minus ?date ?days) ?date2]
+       [?y :yogi ?x]
+       [?x :name ?name]]
+     @conn (zone-id) figure (java-time/local-date (java-time/instant) (zone-id))))
+
+(def signal-agent (agent nil))
+
 (defn add-session [name figure reps offset]
-  (transact conn [{:yogi {:name name} :figure (trim figure) :reps reps :offset offset}]))
+  (transact conn [{:yogi {:name name} :figure (trim figure) :reps reps :offset offset}])
+  (send-off signal-agent
+            (fn [_]
+              (sh "signal-cli" "-u" (:signal-account conf) "receive")
+              (sh "signal-cli" "-u" (:signal-account conf) "send"
+                  "-g" (:signal-group conf)
+                  "-m" (str name " did " reps " " figure)))))
 
 (defn set-color [name color]
   (transact conn [{:db/id [:name name] :color color}]))
